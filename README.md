@@ -1,22 +1,17 @@
 # Build a Kubernetes cluster using K3s via Ansible
 
-Author: <https://github.com/itwars>  
-Current Maintainer: <https://github.com/dereknola>
+Forked from: <https://github.com/k3s-io/k3s-ansible>\
+Currently maintained by: [Akshay Siramdas](https://github.com/weirdKidinClass)
 
 Easily bring up a cluster on machines running:
 
 - [X] Debian
 - [X] Ubuntu
-- [X] Raspberry Pi OS
-- [X] RHEL Family (CentOS, Redhat, Rocky Linux...)
-- [X] SUSE Family (SLES, OpenSUSE Leap, Tumbleweed...)
-- [X] ArchLinux
 
 on processor architectures:
 
 - [X] x64
 - [X] arm64
-- [X] armhf
 
 ## System requirements
 
@@ -29,6 +24,8 @@ All managed nodes in inventory must have:
 It is also recommended that all managed nodes disable firewalls and swap. See [K3s Requirements](https://docs.k3s.io/installation/requirements) for more information.
 
 ## Usage
+
+Create a new branch for the deployment.
 
 First copy the sample inventory to `inventory.yml`.
 
@@ -49,6 +46,15 @@ k3s_cluster:
         192.16.35.13:
 ```
 
+For our current deployment setup, we only use a server that acts as control-plane and a node. SO it looks like:
+```bash
+k3s_cluster:
+  children:
+    server:
+      hosts:
+        192.16.35.11:
+```
+
 If needed, you can also edit `vars` section at the bottom to match your environment.
 
 If multiple hosts are in the server group the playbook will automatically setup k3s in HA mode with embedded etcd.
@@ -56,6 +62,7 @@ An odd number of server nodes is required (3,5,7). Read the [official documentat
 
 Setting up a loadbalancer or VIP beforehand to use as the API endpoint is possible but not covered here.
 
+**Generate a random string and replace the token value!!**
 
 Start provisioning of the cluster using the following command:
 
@@ -137,18 +144,3 @@ vagrant up
 ```
 
 By default, each node is given 2 cores and 2GB of RAM and runs Ubuntu 20.04. You can customize these settings by editing the `Vagrantfile`.
-
-## Need More Features?
-
-This project is intended to provide a "vanilla" K3s install. If you need more features, such as:
-- Private Registry
-- Advanced Storage (Longhorn, Ceph, etc)
-- External Database
-- External Load Balancer or VIP
-- Alternative CNIs
-
-See these other projects:
-- https://github.com/PyratLabs/ansible-role-k3s
-- https://github.com/techno-tim/k3s-ansible
-- https://github.com/jon-stumpf/k3s-ansible
-- https://github.com/alexellis/k3sup
