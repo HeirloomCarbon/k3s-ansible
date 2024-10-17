@@ -40,3 +40,26 @@
         path: "~{{ ansible_user }}/.bashrc"
         search_string: "Added by k3s-ansible"
         state: absent
+
+- name: Undo kubectl setup
+  hosts: server
+  become: true
+  tasks:
+  - name: Unlink kubectl symlink
+    file:
+      path: "/usr/bin/kubectl"
+      state: absent
+  - name: Check what kubectl versions exist
+    find:
+      paths: /opt
+      patterns: "kubectl-*"
+      file_type: directory
+    register: kubectl_versions
+  - name: Display found kubectl versions
+    debug:
+      msg: "Found kubectl versions: {{ kubectl_versions.files | map(attribute='path') | list }}"
+  - name: Remove all kubectl versions
+    file:
+      path: "{{ item.path }}"
+      state: absent
+    with_items: "{{ kubectl_versions.files }}"

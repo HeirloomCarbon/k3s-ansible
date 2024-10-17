@@ -5,11 +5,17 @@
     return_content: yes
   register: version
 
+- name: Check if kubectl version already exists
+  stat:
+    path: "/opt/kubectl-{{ version.content }}/kubectl"
+  register: kubectl_binary
+
 - name: create kubectl versioned directory
   file:
     path: /opt/kubectl-{{ version.content }}
     state: directory
   become: true
+  when: not kubectl_binary.stat.exists
 
 - name: Download the latest kubectl release
   uri:
@@ -17,6 +23,7 @@
     dest: /opt/kubectl-{{ version.content }}
   register: kubectl
   become: true
+  when: not kubectl_binary.stat.exists
 
 - name: Download the kubectl checksum
   uri:
@@ -24,39 +31,33 @@
     dest: /opt/kubectl-{{ version.content }}
   register: kubectl
   become: true
+  when: not kubectl_binary.stat.exists
 
-- name: Get kubectl sha256sum
-  shell: sha256sum /opt/kubectl-{{ version.content }}/kubectl | cut -d " " -f1
-  register: file_shasum
+- name: Verify kubectl binary checksum
+  block:
+  - name: Get kubectl sha256sum
+    shell: "sha256sum /opt/kubectl-{{ version.content | trim }}/kubectl | cut -d ' ' -f1"
+    register: file_shasum
 
-- set_fact:
-    shasum1={{ file_shasum.stdout }}
+  - name: Get sha256sum value from file
+    command: "cat /opt/kubectl-{{ version.content | trim }}/kubectl.sha256"
+    register: downloaded_shasum
 
-- debug: var=shasum1
-  run_once: true
-
-- name: get sha256sum value from file
-  command: cat /opt/kubectl-{{ version.content }}/kubectl.sha256
-  register: downloaded_shasum
-
-- set_fact:
-    shasum2={{ downloaded_shasum.stdout }}
-
-- debug: var=shasum2
-  run_once: true
-
-- name: Assert that the kubectl binary is OK
-  assert:
-    that:
-    - file_shasum.stdout == downloaded_shasum.stdout
-    fail_msg: "shasum does not correspond"
-    success_msg: "kubectl shasum verified: ok"
+  - name: Assert that the kubectl binary is OK
+    assert:
+      that:
+      - file_shasum.stdout == downloaded_shasum.stdout.split()[0]
+      fail_msg: "shasum does not correspond"
+      success_msg: "kubectl shasum verified: ok"
+  when: not kubectl_binary.stat.exists
 
 - name: Change kubectl file permission
   file:
     path: "/opt/kubectl-{{ version.content }}/kubectl"
     mode: '0755'
   become: true
+  when: not kubectl_binary.stat.exists
+
 
 - name: create a symlink to kubectl
   file:

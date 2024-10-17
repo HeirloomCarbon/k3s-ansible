@@ -5,6 +5,11 @@
   changed_when: false
   ignore_errors: true
 
+- name: Debug k3s version output
+  ansible.builtin.debug:
+    var: k3s_version_output
+  when: k3s_version_output.rc != 0
+
 - name: Set k3s installed version
   when: k3s_version_output.rc == 0
   ansible.builtin.set_fact:

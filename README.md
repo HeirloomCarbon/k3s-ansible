@@ -99,7 +99,7 @@ The format of the datastore-endpoint parameter is dependent upon the datastore b
 A playbook is provided to upgrade K3s on all nodes in the cluster. To use it, update `k3s_version` with the desired version in `inventory.yml` and run:
 
 ```bash
-ansible-playbook playbooks/upgrade.yml -i inventory.yml
+ansible-playbook playbooks/upgrade.yml -i inventory.yml --ask-become-pass
 ```
 
 ## Airgap Install
